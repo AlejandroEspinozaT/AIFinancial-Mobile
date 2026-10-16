@@ -1,6 +1,5 @@
 package com.aifinancial.mobile.ui.capture
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -17,9 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -32,16 +28,9 @@ import com.aifinancial.mobile.core.queue.PendingDocumentStatus
 fun CaptureScreen(viewModel: CaptureViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val queue by viewModel.queue.collectAsStateWithLifecycle()
-    var pendingCaptureUri by remember { mutableStateOf<Uri?>(null) }
-    var pendingCapturePath by remember { mutableStateOf<String?>(null) }
 
     val captureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        val path = pendingCapturePath
-        if (success && path != null) {
-            viewModel.onPhotoCaptured(path)
-        }
-        pendingCaptureUri = null
-        pendingCapturePath = null
+        viewModel.onCaptureResult(success)
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -57,8 +46,7 @@ fun CaptureScreen(viewModel: CaptureViewModel = hiltViewModel()) {
             onClick = {
                 val file = CaptureFileFactory.createCaptureFile(context)
                 val uri = CaptureFileFactory.uriFor(context, file)
-                pendingCaptureUri = uri
-                pendingCapturePath = file.absolutePath
+                viewModel.onCaptureStarted(file.absolutePath)
                 captureLauncher.launch(uri)
             },
         ) {

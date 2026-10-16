@@ -1,5 +1,6 @@
 package com.aifinancial.mobile.ui.capture
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aifinancial.mobile.core.queue.PendingDocument
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CaptureViewModel @Inject constructor(
     private val documentCaptureRepository: DocumentCaptureRepository,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     /**
@@ -25,13 +27,30 @@ class CaptureViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * Called once the camera intent reports a file was actually written. The
-     * repository's `enqueue` suspends until the Room insert completes —
-     * nothing here reports success to the UI before that row is durable.
+     * Records which file the camera is about to write, *before* the camera
+     * opens. Kept in [SavedStateHandle], not Compose `remember`: while the
+     * camera app is in front, Android may kill this app's process, and the
+     * capture result is then delivered to a freshly recreated screen. Held in
+     * memory only, the path was gone by then and the photo was silently
+     * dropped from the queue (found by offline-review on an emulator).
      */
-    fun onPhotoCaptured(localFilePath: String) {
-        viewModelScope.launch {
-            documentCaptureRepository.enqueue(localFilePath)
+    fun onCaptureStarted(localFilePath: String) {
+        savedStateHandle[PENDING_CAPTURE_PATH] = localFilePath
+    }
+
+    /**
+     * Called with the camera intent's result. On success, enqueues the file
+     * recorded by [onCaptureStarted]; the repository's `enqueue` suspends
+     * until the Room insert completes — nothing here reports success to the
+     * UI before that row is durable.
+     */
+    fun onCaptureResult(success: Boolean) {
+        val localFilePath = savedStateHandle.get<String>(PENDING_CAPTURE_PATH) ?: return
+        savedStateHandle.remove<String>(PENDING_CAPTURE_PATH)
+        if (success) {
+            viewModelScope.launch {
+                documentCaptureRepository.enqueue(localFilePath)
+            }
         }
     }
 
@@ -46,5 +65,9 @@ class CaptureViewModel @Inject constructor(
         viewModelScope.launch {
             documentCaptureRepository.retry(localId)
         }
+    }
+
+    private companion object {
+        const val PENDING_CAPTURE_PATH = "pendingCapturePath"
     }
 }
