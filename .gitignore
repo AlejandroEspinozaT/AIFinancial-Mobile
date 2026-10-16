@@ -1,0 +1,23 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Gradle wrapper jar IS tracked — do not ignore gradle-wrapper.jar
+
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Log files
+*.log
+
+# Android Profiling
+*.hprof
