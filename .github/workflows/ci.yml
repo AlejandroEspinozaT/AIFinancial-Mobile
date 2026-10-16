@@ -36,13 +36,15 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      # GitHub-hosted runners generally have an Android SDK preinstalled,
-      # but this makes the exact platform/build-tools this project needs
-      # explicit and reproducible rather than relying on whatever happens
-      # to already be on the image.
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
+      # No separate Android SDK setup step: ubuntu-latest's GitHub-hosted
+      # image ships a maintained Android SDK (ANDROID_HOME preconfigured,
+      # licenses pre-accepted) including this project's compileSdk/
+      # build-tools versions. android-actions/setup-android@v3 was tried
+      # here first and failed — it unconditionally requests the legacy
+      # 'tools' package, which Google removed from the SDK repository
+      # years ago, so the action always fails on current SDK listings
+      # regardless of this project. Confirmed via the actual CI run logs,
+      # not assumed.
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --console=plain
 
