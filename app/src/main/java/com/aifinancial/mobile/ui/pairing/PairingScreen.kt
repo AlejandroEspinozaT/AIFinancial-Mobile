@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aifinancial.mobile.BuildConfig
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
 /**
  * No password is ever typed here — pairing is scan-only (see
- * specs/architecture/api-integration.md). `deviceName` is a sensible,
+ * specs/architecture/api-integration.md); debug builds additionally offer
+ * typing the pairing code itself (see [DebugManualCodeEntry]). `deviceName` is a sensible,
  * non-configurable default for Stage 1; letting the user rename it is a
  * Stage 4 (device management/polish) concern, not load-bearing here.
  */
@@ -74,6 +76,13 @@ fun PairingScreen(
             },
         ) {
             Text("Scan QR code")
+        }
+
+        if (BuildConfig.DEBUG) {
+            DebugManualCodeEntry(
+                enabled = uiState !is PairingUiState.Pairing,
+                onSubmit = { code -> viewModel.onCodeScanned(code, deviceName) },
+            )
         }
 
         when (val state = uiState) {
