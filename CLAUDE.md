@@ -17,33 +17,54 @@ Guidance for Claude Code when working in this repository.
 
 ## Project status
 
-Kotlin/Jetpack Compose Android app (single `:app` Gradle module for now, see
-`specs/architecture/technology-choices.md` for the planned exception). No
-stage has been implemented yet — this repo currently holds only the Stage 0
-scaffold (empty placeholder screen) plus specs/skills/agent. Check
+Kotlin/Jetpack Compose Android app, two Gradle modules: `:core` (pure
+Kotlin/JVM, Stage 1's queue/pairing domain logic — resolvable and testable
+in this sandbox, see below) and `:app` (the Android application —
+buildable only in Android Studio, see the constraint below). Check
 [`specs/phases/README.md`](specs/phases/README.md) for exact current status
 before assuming anything is or isn't built.
 
-### A hard constraint of this dev environment — read before running Gradle here
+### Two verified, hard constraints of this dev environment — read before running Gradle here
 
-This sandboxed/remote environment **cannot reach Google's Maven repository**
-(`dl.google.com` returns 403 through the proxy — verified directly). That
-means the Android Gradle Plugin, AndroidX, Compose, and Room cannot be
-resolved here, so **`./gradlew build`/`assembleDebug` for the `:app` module
-will fail here and that is expected, not a bug to chase.** Maven Central
-*is* reachable, which is the whole reason for keeping pure domain logic in
-a dependency-light module per `technology-choices.md` — that module's tests
-can actually run here. The full app can only be built, run, and manually
-verified in Android Studio on a machine with normal internet access — that
-verification step belongs to the human in the loop, not to this agent, for
-any stage that touches `:app`'s Android-only code.
+1. **Google's Maven repository is genuinely unreachable** (`dl.google.com`
+   returns 403 through the proxy — confirmed directly against the proxy's
+   own status endpoint, which logs it as a policy denial, not a
+   misconfiguration to work around). The Android Gradle Plugin, AndroidX,
+   Compose, Room, and WorkManager all live there, so **`./gradlew build`/
+   `assembleDebug`/anything under `:app` will fail here, and that is
+   expected — it is not a bug to chase.** `settings.gradle.kts` scopes
+   `google()` to only the groups that actually need it (content filtering),
+   specifically so this failure stays isolated to `:app` and never blocks
+   resolving `:core`.
+2. **Maven Central's Cloudflare front intermittently 404s a plain `HEAD`
+   request for an artifact that a `GET` on the exact same URL serves
+   fine** — confirmed directly (not assumed) during this project's own
+   setup: `kotlin-util-klib-2.0.21.jar`'s HEAD returned 404 with a
+   `retry-after` header while GET returned 200. Gradle's dependency
+   resolver relies on HEAD to decide an artifact exists at all, so this
+   silently breaks resolution of whatever artifact it hits, unpredictably.
+   `settings.gradle.kts` adds Google's GCS-hosted mirror of Maven Central
+   (`maven-central.storage-download.googleapis.com` — a different host
+   from the blocked `dl.google.com`, not Cloudflare-fronted) ahead of
+   `mavenCentral()` specifically to route around this. If a *new*
+   dependency added later still fails to resolve with a "Could not find
+   ...jar" error (not a 403/ connection error), re-check this exact
+   failure mode (`curl -I` the URL Gradle names — a 404 on HEAD but 200 on
+   GET is the signature) before assuming the dependency doesn't exist.
+
+Together these mean: **`:core` is real, resolvable, and testable in this
+sandbox — verified, not assumed (`./gradlew :core:test` passes, 8/8).**
+`:app` can only be built, run, and manually verified in Android Studio on a
+machine with normal internet access — that verification step belongs to
+the human in the loop, not to this agent, for any stage that touches
+`:app`'s Android-only code.
 
 ### Commands
 
 ```bash
-./gradlew :app:lint                 # static analysis — needs Google Maven, Android Studio only
-./gradlew test                      # unit tests — only modules with no Google-Maven-hosted deps run here
-./gradlew :app:testDebugUnitTest    # app module unit tests — Android Studio only (see constraint above)
+./gradlew :core:test                # runs here — verified, pure-JVM domain logic
+./gradlew :app:testDebugUnitTest    # Android Studio only (constraint 1 above)
+./gradlew :app:lint                 # Android Studio only (constraint 1 above)
 ```
 
 ## Non-negotiables

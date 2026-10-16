@@ -19,6 +19,18 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 10.0.2.2 is the Android emulator's alias for the host machine's
+        // localhost; 8080 is the AIFinancial backend's own api service port
+        // in its docker-compose.yml — the practical default for pointing at
+        // that backend running locally via `docker compose up` on the same
+        // dev machine. Override per-build via -PapiBaseUrl=... once this
+        // needs to point at a real deployment.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${project.findProperty("apiBaseUrl") ?: "http://10.0.2.2:8080/api/"}\"",
+        )
     }
 
     buildTypes {
@@ -39,17 +51,24 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+    implementation(project(":core"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.foundation)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
 
@@ -67,6 +86,10 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.zxing.embedded)
+    implementation(libs.kotlinx.coroutines.android)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

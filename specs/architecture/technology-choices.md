@@ -30,6 +30,26 @@ Standard choice, consistent with the backend's existing JSON contract
 because Kotlin DTOs can be `@Serializable` data classes directly, no
 reflection, no separate adapter generation step.
 
+## ZXing (`com.journeyapps:zxing-android-embedded`), not ML Kit, for QR scanning
+
+Pairing needs to scan one QR code and nothing else. ML Kit's barcode
+scanning is the other common choice, but it pulls in a Play Services
+dependency and a much larger footprint for a single, well-understood
+decoding task ZXing has handled reliably for years with no Play Services
+requirement — relevant since this app's own identity (device pairing) must
+not implicitly assume Google Play Services is present on every target
+device.
+
+## AndroidX Security Crypto (`EncryptedSharedPreferences`), not plain `SharedPreferences`
+
+Device tokens are bearer credentials (see `api-integration.md`) — the same
+rigor the backend repo applies to secrets (never logged, never stored raw)
+applies here. `EncryptedSharedPreferences`, backed by an Android
+Keystore-derived key via `MasterKey`, is the standard, no-extra-
+infrastructure way to do this on-device; still alpha-versioned upstream,
+which is a known, accepted tradeoff (it has had no stable release in years
+but remains the standard recommendation for exactly this use case).
+
 ## Hilt, not manual DI or a service locator
 
 With Room, a Retrofit client, WorkManager workers, and the pairing/token
