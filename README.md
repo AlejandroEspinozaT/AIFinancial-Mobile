@@ -1,5 +1,7 @@
 # AIFinancial Mobile
 
+[![CI](https://github.com/AlejandroEspinozaT/AIFinancial-Mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/AlejandroEspinozaT/AIFinancial-Mobile/actions/workflows/ci.yml)
+
 Native Android companion app for the **AI Financial Intelligence Platform**
 (the `AIFinancial` backend/web repo). Offline-first document capture +
 device pairing — see [`CLAUDE.md`](CLAUDE.md) and

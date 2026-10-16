@@ -54,7 +54,10 @@ user can capture multiple documents back-to-back with the device in
 airplane mode, see them all listed as `QUEUED`, kill and relaunch the app,
 and still see them all — all before Stage 2 (sync) exists at all.
 
-**Status: code-complete, not yet verified.** Everything above that isn't
-checked off requires Android Studio and a device/emulator to actually run
-and confirm — that verification pass is the next concrete step before this
-stage can be called done, not an afterthought.
+**Status: code-complete, not yet device-verified.** CI
+(`.github/workflows/ci.yml`) now compiles `:app`, runs its lint, and runs
+its unit tests on every push/PR — closing the "does this even compile"
+gap this sandbox can't check. It does **not** and cannot replace the
+device-level checks still unchecked above (airplane mode, process death,
+accumulation) — those need a real device/emulator and remain the next
+concrete step before this stage can be called done, not an afterthought.

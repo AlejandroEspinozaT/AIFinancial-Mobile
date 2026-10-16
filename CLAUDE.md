@@ -54,17 +54,24 @@ before assuming anything is or isn't built.
 
 Together these mean: **`:core` is real, resolvable, and testable in this
 sandbox — verified, not assumed (`./gradlew :core:test` passes, 8/8).**
-`:app` can only be built, run, and manually verified in Android Studio on a
-machine with normal internet access — that verification step belongs to
-the human in the loop, not to this agent, for any stage that touches
-`:app`'s Android-only code.
+`:app` can only be built in this sandbox's agent environment; it needs
+either **CI** (`.github/workflows/ci.yml` — GitHub-hosted runners have
+normal, unrestricted internet access, so `:app:assembleDebug`/
+`:app:testDebugUnitTest`/`:app:lintDebug` run for real there on every push/PR)
+or **Android Studio** for anything this agent cannot check itself —
+running the app, and `offline-review`'s device-level checklist (airplane
+mode, process death, accumulation) specifically, which no CI job can stand
+in for. That device-level verification step belongs to the human in the
+loop, not to this agent or to CI, for any stage that touches `:app`'s
+Android-only code.
 
 ### Commands
 
 ```bash
 ./gradlew :core:test                # runs here — verified, pure-JVM domain logic
-./gradlew :app:testDebugUnitTest    # Android Studio only (constraint 1 above)
-./gradlew :app:lint                 # Android Studio only (constraint 1 above)
+./gradlew :app:testDebugUnitTest    # runs in CI; Android Studio only in this sandbox
+./gradlew :app:lintDebug             # runs in CI; Android Studio only in this sandbox
+./gradlew :app:assembleDebug         # runs in CI; Android Studio only in this sandbox
 ```
 
 ## Non-negotiables
