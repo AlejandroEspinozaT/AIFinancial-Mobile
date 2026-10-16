@@ -12,9 +12,14 @@ pluginManagement {
             content {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("androidx.*")
-                includeGroupByRegex("com\\.google\\.android.*")
-                includeGroup("com.google.dagger")
-                includeGroup("com.google.gms")
+                // Broad on purpose: AGP's own transitive dependencies
+                // reach beyond androidx/com.android (e.g.
+                // com.google.testing.platform:* for its managed-device
+                // test tooling) — a narrower, hand-picked list broke CI
+                // the first time it ran for real (dl.google.com is
+                // reachable there, unlike this sandbox), because it
+                // didn't anticipate every com.google.* group AGP needs.
+                includeGroupByRegex("com\\.google\\..*")
             }
         }
         // Google's own GCS-hosted mirror of Maven Central, tried before
@@ -45,8 +50,7 @@ dependencyResolutionManagement {
             content {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("androidx.*")
-                includeGroupByRegex("com\\.google\\.android.*")
-                includeGroup("com.google.dagger")
+                includeGroupByRegex("com\\.google\\..*")
             }
         }
         maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }
