@@ -5,6 +5,16 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- required="false": the CAMERA permission alone implies this hardware
+         is mandatory (Play Store would hide the app on devices/ChromeOS
+         without a camera) unless stated otherwise. Capture is this app's
+         core feature but gracefully no-ops without a camera result
+         (TakePicture's callback just reports failure), so it isn't a hard
+         device requirement at the manifest level. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <!-- Required on API 30+ to resolve the system camera app via the
          implicit ACTION_IMAGE_CAPTURE intent (TakePicture contract). -->
     <queries>

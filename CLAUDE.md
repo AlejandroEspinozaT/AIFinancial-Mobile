@@ -74,6 +74,36 @@ Android-only code.
 ./gradlew :app:assembleDebug         # runs in CI; Android Studio only in this sandbox
 ```
 
+## Git workflow
+
+Same convention as the `AIFinancial` backend repo:
+
+- **One stage = one PR.** Branch from latest `origin/main` as
+  `feature/<stage-name>` (e.g. `feature/device-pairing-offline-capture`),
+  implement the whole stage there, open one PR against `main` when it's
+  code-complete and `:core`'s tests (plus anything CI covers) pass.
+- **Never merge your own PR.** Open it, subscribe to its CI/review
+  activity, drive it to green, and stop — the repo owner reviews and
+  merges. Setup/infra changes that aren't a feature stage (CI config,
+  a dependency bump) can be a smaller, equally-reviewed PR rather than a
+  direct push to `main`.
+- **Commit messages** explain the *why*, not just the what, and end with
+  the attribution trailer (`Co-Authored-By` / `Claude-Session`) from the
+  session's own instructions.
+- **PR descriptions** follow the same `## Summary` / `## Test plan` /
+  `## Docs` structure used in `AIFinancial`'s PRs — state plainly what was
+  verified where (this sandbox vs. CI vs. "needs Android Studio/a device"),
+  never implying something passed that was never actually run.
+- Version bumps (`app/build.gradle.kts`'s `versionCode`/`versionName`) and
+  `specs/phases/stage-N-*.md` checklist updates land in the same PR as the
+  stage they describe, not a follow-up.
+
+**Note on this repo's own history:** the Stage 0 scaffold, Stage 1's
+implementation, and the CI pipeline were all pushed directly to `main`
+during this repo's initial setup, before this convention was written down
+here explicitly — a deviation from the rule above, not an exception to it.
+Every change from here on follows the branch-and-PR workflow.
+
 ## Non-negotiables
 
 - **Offline-first is not optional.** Any stage touching capture, the local
