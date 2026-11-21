@@ -2,6 +2,7 @@ package com.aifinancial.mobile.ui.capture
 
 import androidx.lifecycle.SavedStateHandle
 import com.aifinancial.mobile.data.repository.DocumentCaptureRepository
+import com.aifinancial.mobile.sync.SyncScheduler
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -21,6 +22,7 @@ class CaptureViewModelTest {
     private val repository = mockk<DocumentCaptureRepository>(relaxed = true) {
         every { observeQueue() } returns flowOf(emptyList())
     }
+    private val syncScheduler = mockk<SyncScheduler>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -34,7 +36,7 @@ class CaptureViewModelTest {
 
     @Test
     fun `successful capture enqueues the file recorded before the camera opened`() {
-        val viewModel = CaptureViewModel(repository, SavedStateHandle())
+        val viewModel = CaptureViewModel(repository, syncScheduler, SavedStateHandle())
 
         viewModel.onCaptureStarted("/captures/a.jpg")
         viewModel.onCaptureResult(success = true)
@@ -48,8 +50,12 @@ class CaptureViewModelTest {
         // ViewModel instance is gone, and a new one is restored from the same
         // saved state the system persisted for the screen.
         val savedState = SavedStateHandle()
-        CaptureViewModel(repository, savedState).onCaptureStarted("/captures/b.jpg")
-        val restored = CaptureViewModel(repository, SavedStateHandle(savedState.keys().associateWith { savedState.get<Any>(it) }))
+        CaptureViewModel(repository, syncScheduler, savedState).onCaptureStarted("/captures/b.jpg")
+        val restored = CaptureViewModel(
+            repository,
+            syncScheduler,
+            SavedStateHandle(savedState.keys().associateWith { savedState.get<Any>(it) }),
+        )
 
         restored.onCaptureResult(success = true)
 
@@ -58,7 +64,7 @@ class CaptureViewModelTest {
 
     @Test
     fun `cancelled capture enqueues nothing and clears the pending file`() {
-        val viewModel = CaptureViewModel(repository, SavedStateHandle())
+        val viewModel = CaptureViewModel(repository, syncScheduler, SavedStateHandle())
 
         viewModel.onCaptureStarted("/captures/c.jpg")
         viewModel.onCaptureResult(success = false)

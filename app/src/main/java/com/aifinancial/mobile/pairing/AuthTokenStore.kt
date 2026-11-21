@@ -44,6 +44,18 @@ class AuthTokenStore @Inject constructor(@ApplicationContext context: Context) {
 
     fun isPaired(): Boolean = getAccessToken() != null
 
+    /**
+     * Stage 2's token refresh: the backend rotates both tokens on every
+     * refresh (see `RefreshTokenCommandHandler`), but the device id never
+     * changes, so it's left untouched here rather than re-read/re-written.
+     */
+    fun updateTokens(accessToken: String, refreshToken: String) {
+        prefs.edit()
+            .putString(KEY_ACCESS_TOKEN, accessToken)
+            .putString(KEY_REFRESH_TOKEN, refreshToken)
+            .apply()
+    }
+
     /** Called on unlink (Stage 4) or on an unrecoverable refresh failure (Stage 2). */
     fun clear() {
         prefs.edit().clear().apply()
