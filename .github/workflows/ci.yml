@@ -3,8 +3,14 @@ name: CI
 on:
   push:
     branches: [main]
+  # No branches filter here on purpose: this repo stacks PRs stage-by-stage
+  # against each other's branches (see CLAUDE.md's "Stacked PRs across
+  # stages"), not always against main, and a PR whose base isn't main still
+  # needs CI run on it before it's driven to green. A `branches: [main]`
+  # filter here would silently skip CI entirely for any PR targeting
+  # another feature branch -- found empirically when PR #6/#7 (stacked on
+  # #5) showed zero check runs despite real pushes.
   pull_request:
-    branches: [main]
 
 jobs:
   core:
