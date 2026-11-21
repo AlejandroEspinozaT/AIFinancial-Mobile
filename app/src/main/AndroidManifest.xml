@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -48,6 +49,24 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- AiFinancialApp implements androidx.work.Configuration.Provider
+             to supply the Hilt WorkerFactory, which means WorkManager's own
+             default App Startup initializer must be removed (lint:
+             RemoveWorkManagerInitializer) -- otherwise WorkManager
+             initializes itself twice, once via this default and once via
+             Configuration.Provider, which is exactly what "on-demand
+             initialization" exists to prevent. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
     </application>
