@@ -3,6 +3,7 @@ package com.aifinancial.mobile.data.repository
 import com.aifinancial.mobile.core.queue.PendingDocument
 import com.aifinancial.mobile.core.queue.PendingDocumentStatus
 import com.aifinancial.mobile.core.queue.SyncOutcome
+import com.aifinancial.mobile.data.local.CacheMetadataDao
 import com.aifinancial.mobile.data.local.PendingDocumentDao
 import com.aifinancial.mobile.data.local.PendingDocumentEntity
 import com.aifinancial.mobile.data.local.toEntity
@@ -32,7 +33,8 @@ class DocumentSyncRepositoryTest {
 
     private val dao = mockk<PendingDocumentDao>(relaxed = true)
     private val documentsApi = mockk<DocumentsApi>()
-    private val repository = DocumentSyncRepository(dao, documentsApi)
+    private val cacheMetadataDao = mockk<CacheMetadataDao>(relaxed = true)
+    private val repository = DocumentSyncRepository(dao, documentsApi, cacheMetadataDao)
     private lateinit var tempFile: File
 
     @Before

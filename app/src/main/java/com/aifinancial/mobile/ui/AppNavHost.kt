@@ -20,16 +20,18 @@ import com.aifinancial.mobile.ui.capture.CaptureScreen
 import com.aifinancial.mobile.ui.overview.OverviewScreen
 import com.aifinancial.mobile.ui.pairing.PairingScreen
 import com.aifinancial.mobile.ui.session.SessionViewModel
+import com.aifinancial.mobile.ui.settings.SettingsScreen
 
 private object Routes {
     const val PAIRING = "pairing"
     const val CAPTURE = "capture"
     const val OVERVIEW = "overview"
+    const val SETTINGS = "settings"
 }
 
-// Only these two routes get the bottom nav bar — pairing is a full-screen,
+// Only these three routes get the bottom nav bar — pairing is a full-screen,
 // one-time flow with nothing yet to switch between.
-private val bottomNavRoutes = listOf(Routes.CAPTURE, Routes.OVERVIEW)
+private val bottomNavRoutes = listOf(Routes.CAPTURE, Routes.OVERVIEW, Routes.SETTINGS)
 
 @Composable
 fun AppNavHost(
@@ -76,6 +78,14 @@ fun AppNavHost(
                         icon = { Text("📋") },
                         label = { Text("Overview") },
                     )
+                    NavigationBarItem(
+                        selected = currentBackStackEntry?.destination?.hierarchy?.any { it.route == Routes.SETTINGS } == true,
+                        onClick = {
+                            navController.navigate(Routes.SETTINGS) { popUpTo(Routes.CAPTURE) }
+                        },
+                        icon = { Text("⚙️") },
+                        label = { Text("Settings") },
+                    )
                 }
             }
         },
@@ -99,6 +109,15 @@ fun AppNavHost(
             }
             composable(Routes.OVERVIEW) {
                 OverviewScreen()
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(
+                    onUnlinked = {
+                        navController.navigate(Routes.PAIRING) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                )
             }
         }
     }

@@ -41,6 +41,8 @@ class PairingRepository @Inject constructor(
 
         authTokenStore.saveTokens(
             deviceId = body.deviceId,
+            deviceName = deviceName,
+            email = body.email,
             accessToken = body.accessToken,
             refreshToken = body.refreshToken,
         )

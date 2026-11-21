@@ -57,6 +57,18 @@ fun CaptureScreen(viewModel: CaptureViewModel = hiltViewModel()) {
 
         Text("Queue (${queue.size})", style = MaterialTheme.typography.titleSmall)
 
+        if (queue.isEmpty()) {
+            // Stage 4's "empty states for 'no documents captured yet'" —
+            // an empty LazyColumn alone reads as broken, not as "nothing
+            // here yet, that's expected."
+            Text(
+                "No documents captured yet. Tap \"Take photo\" to capture your first one.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(queue, key = { it.localId }) { document ->
                 QueueRow(document = document, onRetry = { viewModel.onRetry(document.localId) })
@@ -91,9 +103,6 @@ private fun QueueRow(document: PendingDocument, onRetry: () -> Unit) {
 }
 
 private fun statusLabel(document: PendingDocument): String = when (document.status) {
-    // Only QUEUED is reachable until Stage 2 (background sync) exists —
-    // UPLOADED/FAILED labels are written now so the UI doesn't need
-    // revisiting once that stage lands.
     PendingDocumentStatus.QUEUED -> "Queued — will upload when online"
     PendingDocumentStatus.UPLOADED -> "Uploaded"
     PendingDocumentStatus.FAILED -> "Failed: ${document.failureReason ?: "unknown reason"}"
