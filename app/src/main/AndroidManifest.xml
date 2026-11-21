@@ -54,10 +54,10 @@
         <!-- AiFinancialApp implements androidx.work.Configuration.Provider
              to supply the Hilt WorkerFactory, which means WorkManager's own
              default App Startup initializer must be removed (lint:
-             RemoveWorkManagerInitializer) -- otherwise WorkManager
-             initializes itself twice, once via this default and once via
-             Configuration.Provider, which is exactly what "on-demand
-             initialization" exists to prevent. -->
+             RemoveWorkManagerInitializer), since otherwise WorkManager
+             would initialize itself twice: once via this default and once
+             via Configuration.Provider, the exact double-initialization
+             "on-demand initialization" exists to prevent. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
