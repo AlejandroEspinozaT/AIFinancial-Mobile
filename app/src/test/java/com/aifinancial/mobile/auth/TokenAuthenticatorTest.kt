@@ -31,13 +31,18 @@ class TokenAuthenticatorTest {
 
     private fun sampleRequest(): Request = Request.Builder().url("http://10.0.2.2:8080/api/documents").build()
 
+    // No .body(...) here: OkHttp's real invariant is that a *prior* response
+    // (one already consumed/replaced in a retry chain) must have a null
+    // body -- Response.Builder.priorResponse() throws
+    // IllegalArgumentException otherwise (found by CI, not assumed). This
+    // helper is used both as the "current" response and as a prior one, so
+    // it never sets a body at all; TokenAuthenticator never reads it.
     private fun unauthorizedResponse(request: Request = sampleRequest(), prior: Response? = null): Response =
         Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)
             .code(401)
             .message("Unauthorized")
-            .body("".toResponseBody(null))
             .apply { if (prior != null) priorResponse(prior) }
             .build()
 
