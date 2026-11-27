@@ -35,29 +35,43 @@ half of the mechanism in isolation.
       via a `Flow` (`CaptureViewModel.queue`), rendered in `CaptureScreen` —
       this is the architectural proof that the UI never needs the network
       to show correct state.
-- [ ] **Survive process death** — code is *designed* for this (the Room
-      insert is awaited before any success is reported, the file is written
-      before the DB row, nothing depends on in-memory state), but the actual
-      proof — kill the process mid-capture on a real device/emulator and
-      confirm nothing is lost — can only be done in Android Studio; this
-      sandbox cannot run the `:app` module at all (see `CLAUDE.md`).
-- [ ] **Tests**: `:core`'s queue-state-machine and `PendingDocument` unit
-      tests exist and pass here (8/8, verified — not assumed). DAO/
-      repository/instrumented tests for `:app` are **not yet written** —
-      they need Android Studio to execute (same constraint). `offline-review`'s
-      device-level checklist (airplane-mode walkthrough, process-death,
-      accumulation) has **not** been run — it requires a real device/emulator
-      this agent does not have access to.
+- [x] **Survive process death** — device-verified on an emulator
+      (`Medium_Phone_API_37.0`) running the `offline-review` checklist with
+      airplane mode on: captured, killed the process mid-flow (`adb shell am
+      kill`), relaunched, and the pending photo was initially **lost** from
+      the queue (real bug, not a hypothetical — Compose `remember` doesn't
+      survive process death). Fixed in PR #4 by moving the pending capture
+      path into `CaptureViewModel`'s `SavedStateHandle`; re-verified after the
+      fix with two more kill-mid-capture passes, both recovered (`Queue (6)`
+      after 4 pre-existing + 2 recovered rows). See PR #4's test plan for the
+      exact before/after counts.
+- [x] **Tests**: `:core`'s queue-state-machine and `PendingDocument` unit
+      tests exist and pass (8/8). `CaptureViewModelTest` (added in PR #4, 3
+      tests, runs in CI via `testDebugUnitTest`) directly simulates process
+      death by restoring a `CaptureViewModel` from a copied `SavedStateHandle`
+      and asserts the pending file still gets enqueued — this is now a
+      standing regression test for the bug above, not just a one-time manual
+      check. `offline-review`'s device-level checklist (airplane-mode
+      walkthrough, process-death, accumulation) **has** been run on a real
+      emulator (PRs #2–#4) and found two more real bugs beyond the process-
+      death one: cleartext HTTP blocked by default on API 28+ against the
+      `10.0.2.2` dev backend (fixed, debug-only, PR #2), and the emulator's
+      virtual camera being impractical to drive via QR automation (worked
+      around with a debug-only manual pairing-code entry field feeding the
+      same `PairingViewModel.onCodeScanned` path, PR #3). DAO/repository-
+      level instrumented tests for `:app` are still not written; nothing
+      found so far has needed them to be caught.
 
 **Deliverable:** pairing works end-to-end against the real backend, and a
 user can capture multiple documents back-to-back with the device in
 airplane mode, see them all listed as `QUEUED`, kill and relaunch the app,
 and still see them all — all before Stage 2 (sync) exists at all.
 
-**Status: code-complete, not yet device-verified.** CI
-(`.github/workflows/ci.yml`) now compiles `:app`, runs its lint, and runs
-its unit tests on every push/PR — closing the "does this even compile"
-gap this sandbox can't check. It does **not** and cannot replace the
-device-level checks still unchecked above (airplane mode, process death,
-accumulation) — those need a real device/emulator and remain the next
-concrete step before this stage can be called done, not an afterthought.
+**Status: done, device-verified.** CI (`.github/workflows/ci.yml`) compiles
+`:app`, runs its lint, and runs its unit tests on every push/PR. Beyond that,
+the full `offline-review` device checklist was actually run on a real
+emulator (not this sandbox, which still cannot run `:app` at all — see
+`CLAUDE.md`) and found and fixed three real bugs: process-death data loss
+(PR #4), cleartext HTTP blocked by default (PR #2), and QR-scan automation
+being impractical on an emulator (PR #3, debug-only workaround). All three
+PRs are merged into `main`. Stage 2 (background sync) can build on this.

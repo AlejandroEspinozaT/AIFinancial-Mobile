@@ -104,6 +104,21 @@ during this repo's initial setup, before this convention was written down
 here explicitly — a deviation from the rule above, not an exception to it.
 Every change from here on follows the branch-and-PR workflow.
 
+**Stacked PRs across stages (standing instruction from the repo owner):**
+when asked to implement multiple remaining stages in one pass, each stage
+still gets its own branch/PR as above, but do **not** wait for a human merge
+between them — branch the next stage off the previous stage's own branch
+(not off `main`), push it, open its PR against `main` immediately, and keep
+going through all remaining stages. Each PR is still driven to CI-green on
+its own before moving to the next (never pass a known-red stage down the
+stack). At the end, report the exact order the PRs must be merged in (always
+stage order — Stage N's PR depends on Stage N-1's, since it branched from
+it) — merging out of order will show Stage N-1's diff inside Stage N's PR
+until Stage N-1 actually lands. This does not relax "never merge your own
+PR," "state plainly what was verified where," or the device-level items
+below — those stay exactly as strict; it only changes who waits between
+PRs.
+
 ## Non-negotiables
 
 - **Offline-first is not optional.** Any stage touching capture, the local

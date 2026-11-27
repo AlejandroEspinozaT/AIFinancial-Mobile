@@ -1,7 +1,12 @@
 package com.aifinancial.mobile.di
 
 import com.aifinancial.mobile.BuildConfig
+import com.aifinancial.mobile.auth.TokenAuthenticator
+import com.aifinancial.mobile.data.remote.AuthApi
+import com.aifinancial.mobile.data.remote.BudgetsApi
 import com.aifinancial.mobile.data.remote.DevicesApi
+import com.aifinancial.mobile.data.remote.DocumentsApi
+import com.aifinancial.mobile.data.remote.TransactionsApi
 import com.aifinancial.mobile.pairing.AuthTokenStore
 import dagger.Module
 import dagger.Provides
@@ -46,7 +51,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: Interceptor): OkHttpClient {
+    fun provideOkHttpClient(authInterceptor: Interceptor, tokenAuthenticator: TokenAuthenticator): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             // BODY logging is deliberately never enabled even in debug: a
             // pairing code or token must never appear in a log line (same
@@ -57,6 +62,7 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
+            .authenticator(tokenAuthenticator)
             .build()
     }
 
@@ -71,4 +77,46 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideDevicesApi(retrofit: Retrofit): DevicesApi = retrofit.create(DevicesApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDocumentsApi(retrofit: Retrofit): DocumentsApi = retrofit.create(DocumentsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTransactionsApi(retrofit: Retrofit): TransactionsApi = retrofit.create(TransactionsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideBudgetsApi(retrofit: Retrofit): BudgetsApi = retrofit.create(BudgetsApi::class.java)
+
+    /**
+     * No auth interceptor and no [TokenAuthenticator] here, by design — see
+     * [com.aifinancial.mobile.di.RefreshOkHttpClient]'s KDoc. This client
+     * only ever makes the one unauthenticated refresh call.
+     */
+    @Provides
+    @Singleton
+    @RefreshOkHttpClient
+    fun provideRefreshOkHttpClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BASIC
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @RefreshRetrofit
+    fun provideRefreshRetrofit(@RefreshOkHttpClient okHttpClient: OkHttpClient, json: Json): Retrofit = Retrofit.Builder()
+        .baseUrl(BuildConfig.API_BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(@RefreshRetrofit retrofit: Retrofit): AuthApi = retrofit.create(AuthApi::class.java)
 }

@@ -2,6 +2,7 @@ package com.aifinancial.mobile.ui.pairing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aifinancial.mobile.auth.SessionExpiryNotifier
 import com.aifinancial.mobile.core.pairing.PairingResult
 import com.aifinancial.mobile.data.repository.PairingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,9 +22,20 @@ sealed interface PairingUiState {
 @HiltViewModel
 class PairingViewModel @Inject constructor(
     private val pairingRepository: PairingRepository,
+    sessionExpiryNotifier: SessionExpiryNotifier,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<PairingUiState>(PairingUiState.Idle)
+    // Stage 4: if this screen was reached because TokenAuthenticator forced
+    // re-pairing after the backend rejected a refresh, show a specific
+    // reason instead of the Idle "scan a code" state — see
+    // specs/phases/stage-4-device-management-and-polish.md.
+    private val _uiState = MutableStateFlow<PairingUiState>(
+        if (sessionExpiryNotifier.consumeRevocationFlag()) {
+            PairingUiState.Error("This device was removed from your account")
+        } else {
+            PairingUiState.Idle
+        },
+    )
     val uiState: StateFlow<PairingUiState> = _uiState.asStateFlow()
 
     fun onCodeScanned(code: String, deviceName: String) {

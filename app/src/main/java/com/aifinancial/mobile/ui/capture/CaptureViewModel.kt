@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aifinancial.mobile.core.queue.PendingDocument
 import com.aifinancial.mobile.data.repository.DocumentCaptureRepository
+import com.aifinancial.mobile.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CaptureViewModel @Inject constructor(
     private val documentCaptureRepository: DocumentCaptureRepository,
+    private val syncScheduler: SyncScheduler,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -50,6 +52,11 @@ class CaptureViewModel @Inject constructor(
         if (success) {
             viewModelScope.launch {
                 documentCaptureRepository.enqueue(localFilePath)
+                // Only after the Room insert above completes — see
+                // DocumentCaptureRepository.enqueue's KDoc. Scheduling sync
+                // on an unqueued document would be a race with nothing to
+                // drain yet.
+                syncScheduler.scheduleSync()
             }
         }
     }
@@ -64,6 +71,7 @@ class CaptureViewModel @Inject constructor(
     fun onRetry(localId: String) {
         viewModelScope.launch {
             documentCaptureRepository.retry(localId)
+            syncScheduler.scheduleSync()
         }
     }
 
