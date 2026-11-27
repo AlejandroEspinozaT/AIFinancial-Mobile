@@ -10,6 +10,7 @@ layers. Same principle as the `AIFinancial` backend repo: a stage isn't
 | [2](stage-2-background-sync.md) | Background sync of the offline queue | ✅ Code-complete, not device-verified |
 | [3](stage-3-offline-read-cache.md) | Offline-readable cache of transactions/budgets | ✅ Code-complete, not device-verified |
 | [4](stage-4-device-management-and-polish.md) | Device settings, unlink, queue-status UI polish | ✅ Code-complete, not device-verified |
+| [5](stage-5-ai-chat-assistant.md) | AI chat assistant (thin client of `POST /api/chat`) | ⬜ In progress |
 
 ## Why this order
 
@@ -35,3 +36,10 @@ in the first place — there is nothing to cache before Stage 2 exists.
 Stage 4 is explicitly last: device management (unlink, rename) and UI
 polish are real but not load-bearing for the core offline-first claim this
 app is built to prove.
+
+Stage 5 (AI chat assistant) was added after Stages 1–4 shipped, by the repo
+owner's explicit decision to extend the original roadmap — see
+`specs/product/overview.md`'s scope section. It's deliberately last and
+deliberately separate from the offline-first core: it's the one screen in
+this app that's allowed to require connectivity outright, rather than
+queue-and-sync like everything else.

@@ -32,12 +32,25 @@ roadmap, is:
 - **In scope:** device pairing, offline-first document capture (photo →
   local queue → background sync via the existing `POST /api/documents`
   endpoint), offline-readable cache of transactions/budgets, basic account
-  management (view linked device, unlink).
-- **Deliberately out of scope for now:** the AI chat assistant (it is
-  inherently online-only — OpenAI-backed — and adds no offline-design
-  tension worth solving first), push notifications, and any UI the web app
+  management (view linked device, unlink), and — as of Stage 5, a deliberate
+  scope extension by the repo owner after Stages 1–4 shipped — the AI chat
+  assistant, as a thin client of the backend's existing `POST /api/chat`.
+  This app never holds, sends, or sees an OpenAI/provider API key of its
+  own: that stays entirely on the backend (`IAiProviderResolver`), exactly
+  as it already does for the web app. Mobile's role here is unchanged from
+  everywhere else in this app — call an authenticated endpoint, render what
+  comes back, never a source of truth for anything.
+- **Deliberately out of scope:** push notifications, and any UI the web app
   already does better (full analytics/calendar views stay web-only for the
   foreseeable future — this app is not a web-app port).
+- **The AI chat assistant is the one deliberate exception to this app's
+  offline-first rule**, not a quiet violation of it: a chat message is never
+  queued for later like a captured document is. Asking a financial question
+  is inherently a live request against current data and a live model call —
+  queuing it would mean answering a stale question with data that may no
+  longer be current by the time connectivity returns, which is a worse user
+  experience than a clear "needs a connection" state right now. See
+  `specs/phases/stage-5-ai-chat-assistant.md`.
 
 ## Relationship to the `AIFinancial` backend repo
 
