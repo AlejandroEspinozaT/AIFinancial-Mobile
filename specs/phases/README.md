@@ -7,9 +7,9 @@ layers. Same principle as the `AIFinancial` backend repo: a stage isn't
 | Stage | What it delivers | Status |
 |---|---|---|
 | [1](stage-1-device-pairing-and-offline-capture.md) | Device pairing + offline document capture core | ✅ Done |
-| [2](stage-2-background-sync.md) | Background sync of the offline queue | ⬜ Next |
-| [3](stage-3-offline-read-cache.md) | Offline-readable cache of transactions/budgets | ⬜ |
-| [4](stage-4-device-management-and-polish.md) | Device settings, unlink, queue-status UI polish | ⬜ |
+| [2](stage-2-background-sync.md) | Background sync of the offline queue | ✅ Code-complete, not device-verified |
+| [3](stage-3-offline-read-cache.md) | Offline-readable cache of transactions/budgets | ✅ Code-complete, not device-verified |
+| [4](stage-4-device-management-and-polish.md) | Device settings, unlink, queue-status UI polish | ✅ Code-complete, not device-verified |
 
 ## Why this order
 

@@ -8,30 +8,52 @@ presented as more current than it actually is.
 Nothing yet lets the user *read* anything from their account without a live
 connection.
 
-- [ ] **Room schema**: cached, read-only mirrors of the subset of
-      `GET /api/transactions` / `GET /api/budgets` needed for a simple
-      list/summary view — not a full offline replica of every field the web
-      app shows.
-- [ ] **Refresh-on-connectivity**: a periodic/triggered `CoroutineWorker`
-      pulls the latest data when online and replaces the local cache;
-      reads always come from Room, exactly like the write path in Stage 1 —
-      the UI layer still never talks to the network directly.
-- [ ] **Staleness is visible, not hidden**: every cached screen shows a
-      "last updated" timestamp. The app never implies a cached list is
-      live data — this is the read-side equivalent of Stage 1's rule that a
-      queued document is never shown as indistinguishable from an uploaded
-      one.
-- [ ] **No stale-write risk**: this cache is strictly read-only — nothing in
-      this stage lets a cached transaction/budget be edited from the phone,
-      so there is no conflict-resolution problem to solve here (deliberately
-      unlike the shared-stock scenario discussed for a different project;
-      this app's writes are only ever new documents, never edits to
-      existing financial records).
-- [ ] **Tests**: cache-population and staleness-timestamp logic unit
-      tested; a manual offline walkthrough confirming the cached screens
-      render correctly with the device in airplane mode after at least one
-      successful online refresh.
+- [x] **Room schema**: `data/local/CachedTransactionEntity.kt` and
+      `CachedBudgetEntity.kt` — a simple list/summary view's worth of fields
+      (id, date, description, amount, currency, type, category for
+      transactions; id, category, limit, spent, percent, exceeded for
+      budgets), not a full replica. `CacheMetadataEntity.kt` records one
+      "last successfully refreshed" timestamp per cache. `AppDatabase`
+      bumped to version 2 with `fallbackToDestructiveMigration()` — this app
+      hasn't shipped, so a real migration path isn't needed yet.
+- [x] **Refresh-on-connectivity**: `sync/ReadCacheSyncWorker.kt`, a thin
+      `@HiltWorker` wrapping `TransactionsCacheRepository.refresh()` and
+      `BudgetsCacheRepository.refresh()`. `sync/ReadCacheSyncScheduler.kt`
+      covers both halves of "periodic/triggered" with one worker: triggered
+      immediately when `ui/overview/OverviewScreen.kt` opens
+      (`OverviewViewModel.init`), and periodically every 30 minutes in the
+      background (`AiFinancialApp.onCreate`) so the cache doesn't go stale
+      just because the user never opens that screen. Reads
+      (`observeTransactions`/`observeBudgets`) come from Room via `Flow`,
+      exactly like Stage 1's write path — `OverviewViewModel` never touches
+      `TransactionsApi`/`BudgetsApi` directly.
+- [x] **Staleness is visible, not hidden**: `OverviewScreen.kt` shows
+      "Last updated: &lt;timestamp&gt;" (or "never", before the first
+      successful refresh) above both the budgets and transactions sections,
+      unconditionally — never only when the list happens to be empty.
+- [x] **No stale-write risk**: unchanged from the plan — this stage adds no
+      edit path for a cached transaction/budget, so there's genuinely no
+      conflict-resolution problem here.
+- [x] **Tests**: `TransactionsCacheRepositoryTest` and
+      `BudgetsCacheRepositoryTest` (3 cases each: a successful refresh
+      atomically replaces the cache and records "last updated"; a failed
+      HTTP response leaves the existing cache untouched; a network
+      exception leaves it untouched — never a guessed partial write). Both
+      DAOs' `replaceAll` default methods are `@Transaction`-scoped
+      delete-then-insert, so a failure mid-refresh can't leave Room's `Flow`
+      emitting a half-replaced list. Run in CI (`testDebugUnitTest`), not
+      this sandbox (still can't build `:app` — see `CLAUDE.md`). **The
+      manual offline walkthrough — confirm the cached screens actually
+      render correctly in airplane mode after a real refresh — needs a real
+      device/emulator and is explicitly pending**, not claimed here.
 
 **Deliverable:** after at least one successful sync while online, a user can
 enable airplane mode and still see a correct (if possibly stale, clearly
 labeled) view of their transactions and budgets.
+
+**Status: code-complete, CI-green expected, not yet device-verified.**
+Backend contracts (`TransactionDto`, `BudgetDto`, `PagedResult<T>`, the
+`GET /api/transactions`/`GET /api/budgets` routes and their query params)
+were read directly from `AIFinancial`'s actual current `main` branch, not
+assumed. The device-level walkthrough above is the same category of
+genuinely-pending, human/device-level work as Stage 1 and Stage 2's.

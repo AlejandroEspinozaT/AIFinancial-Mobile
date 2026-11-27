@@ -4,12 +4,15 @@ import com.aifinancial.mobile.core.queue.PendingDocument
 import com.aifinancial.mobile.core.queue.PendingDocumentStatus
 import com.aifinancial.mobile.core.queue.QueueStateMachine
 import com.aifinancial.mobile.core.queue.SyncOutcome
+import com.aifinancial.mobile.data.local.CacheMetadataDao
+import com.aifinancial.mobile.data.local.CacheMetadataEntity
 import com.aifinancial.mobile.data.local.PendingDocumentDao
 import com.aifinancial.mobile.data.local.toDomain
 import com.aifinancial.mobile.data.local.toEntity
 import com.aifinancial.mobile.data.remote.DocumentsApi
 import java.io.File
 import java.io.IOException
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import okhttp3.MediaType.Companion.toMediaType
@@ -27,6 +30,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 class DocumentSyncRepository @Inject constructor(
     private val dao: PendingDocumentDao,
     private val documentsApi: DocumentsApi,
+    private val cacheMetadataDao: CacheMetadataDao,
 ) {
 
     /**
@@ -49,6 +53,12 @@ class DocumentSyncRepository @Inject constructor(
                 anyStillQueued = true
             }
         }
+
+        // Recorded unconditionally, even when the queue was empty: Stage 4's
+        // Settings screen shows this as "last synced" for the whole app, and
+        // a pass that confirmed there was nothing pending is still a real,
+        // just-happened sync attempt, not a no-op worth hiding.
+        cacheMetadataDao.upsert(CacheMetadataEntity(DOCUMENTS_CACHE_KEY, Instant.now().toEpochMilli()))
 
         return anyStillQueued
     }
@@ -101,5 +111,9 @@ class DocumentSyncRepository @Inject constructor(
         } catch (_: IOException) {
             SyncOutcome.AmbiguousNetworkFailure
         }
+    }
+
+    private companion object {
+        const val DOCUMENTS_CACHE_KEY = "documents"
     }
 }
