@@ -2,6 +2,7 @@ package com.aifinancial.mobile.data.repository
 
 import com.aifinancial.mobile.data.local.AppDatabase
 import com.aifinancial.mobile.data.local.CacheMetadataDao
+import com.aifinancial.mobile.data.local.ChatSessionStore
 import com.aifinancial.mobile.data.remote.DevicesApi
 import com.aifinancial.mobile.pairing.AuthTokenStore
 import java.io.IOException
@@ -30,6 +31,7 @@ class SettingsRepository @Inject constructor(
     private val authTokenStore: AuthTokenStore,
     private val appDatabase: AppDatabase,
     private val cacheMetadataDao: CacheMetadataDao,
+    private val chatSessionStore: ChatSessionStore,
 ) {
 
     fun deviceName(): String? = authTokenStore.getDeviceName()
@@ -71,6 +73,7 @@ class SettingsRepository @Inject constructor(
 
     private suspend fun clearLocalState() {
         authTokenStore.clear()
+        chatSessionStore.clear()
         withContext(Dispatchers.IO) {
             appDatabase.clearAllTables()
         }

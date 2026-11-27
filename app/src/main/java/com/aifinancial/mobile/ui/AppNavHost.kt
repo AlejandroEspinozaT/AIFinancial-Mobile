@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aifinancial.mobile.ui.capture.CaptureScreen
+import com.aifinancial.mobile.ui.chat.ChatScreen
 import com.aifinancial.mobile.ui.overview.OverviewScreen
 import com.aifinancial.mobile.ui.pairing.PairingScreen
 import com.aifinancial.mobile.ui.session.SessionViewModel
@@ -27,11 +28,12 @@ private object Routes {
     const val CAPTURE = "capture"
     const val OVERVIEW = "overview"
     const val SETTINGS = "settings"
+    const val CHAT = "chat"
 }
 
-// Only these three routes get the bottom nav bar — pairing is a full-screen,
+// Only these four routes get the bottom nav bar — pairing is a full-screen,
 // one-time flow with nothing yet to switch between.
-private val bottomNavRoutes = listOf(Routes.CAPTURE, Routes.OVERVIEW, Routes.SETTINGS)
+private val bottomNavRoutes = listOf(Routes.CAPTURE, Routes.OVERVIEW, Routes.CHAT, Routes.SETTINGS)
 
 @Composable
 fun AppNavHost(
@@ -79,6 +81,14 @@ fun AppNavHost(
                         label = { Text("Overview") },
                     )
                     NavigationBarItem(
+                        selected = currentBackStackEntry?.destination?.hierarchy?.any { it.route == Routes.CHAT } == true,
+                        onClick = {
+                            navController.navigate(Routes.CHAT) { popUpTo(Routes.CAPTURE) }
+                        },
+                        icon = { Text("💬") },
+                        label = { Text("Chat") },
+                    )
+                    NavigationBarItem(
                         selected = currentBackStackEntry?.destination?.hierarchy?.any { it.route == Routes.SETTINGS } == true,
                         onClick = {
                             navController.navigate(Routes.SETTINGS) { popUpTo(Routes.CAPTURE) }
@@ -109,6 +119,9 @@ fun AppNavHost(
             }
             composable(Routes.OVERVIEW) {
                 OverviewScreen()
+            }
+            composable(Routes.CHAT) {
+                ChatScreen()
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen(

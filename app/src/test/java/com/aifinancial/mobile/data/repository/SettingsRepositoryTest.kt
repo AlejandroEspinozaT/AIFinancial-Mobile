@@ -2,6 +2,7 @@ package com.aifinancial.mobile.data.repository
 
 import com.aifinancial.mobile.data.local.AppDatabase
 import com.aifinancial.mobile.data.local.CacheMetadataDao
+import com.aifinancial.mobile.data.local.ChatSessionStore
 import com.aifinancial.mobile.data.remote.DevicesApi
 import com.aifinancial.mobile.pairing.AuthTokenStore
 import com.google.common.truth.Truth.assertThat
@@ -28,7 +29,8 @@ class SettingsRepositoryTest {
     private val authTokenStore = mockk<AuthTokenStore>(relaxed = true)
     private val appDatabase = mockk<AppDatabase>(relaxed = true)
     private val cacheMetadataDao = mockk<CacheMetadataDao>(relaxed = true)
-    private val repository = SettingsRepository(devicesApi, authTokenStore, appDatabase, cacheMetadataDao)
+    private val chatSessionStore = mockk<ChatSessionStore>(relaxed = true)
+    private val repository = SettingsRepository(devicesApi, authTokenStore, appDatabase, cacheMetadataDao, chatSessionStore)
 
     @Test
     fun `a successful unlink clears tokens and all local tables`() = runTest {
@@ -40,6 +42,7 @@ class SettingsRepositoryTest {
         assertThat(result).isEqualTo(UnlinkResult.Success)
         verify { authTokenStore.clear() }
         verify { appDatabase.clearAllTables() }
+        verify { chatSessionStore.clear() }
     }
 
     @Test

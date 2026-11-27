@@ -18,6 +18,8 @@ client shared between the two repos.
 | `GET /api/documents` / `GET /api/documents/{id}` | Populating the local read cache (Stage 2). |
 | `GET /api/transactions`, `GET /api/budgets` | Read-only offline cache (Stage 2). |
 | `DELETE /api/devices/{id}` | Unlinking this device from Settings (calls the *web app's* endpoint on this device's own id, surfaced as "unlink this device" in the mobile app's own settings screen). |
+| `POST /api/chat` | Sending a chat message (Stage 5). Creates a session on the first message (`sessionId: null`), continues it on every message after. |
+| `GET /api/chat/sessions/{id}` | Loading this device's one ongoing conversation's history when the Chat screen opens. |
 
 ## Pairing flow (client side)
 
@@ -75,3 +77,19 @@ device and its own upload status — this app is not a general offline mirror
 of the account's full document history (Stage 2 defines the bounded,
 explicit read-cache scope; it is not "cache everything the user has ever
 looked at").
+
+## Chat (Stage 5)
+
+Deliberately the one unbounded exception to "no business logic on this
+client, and everything else is offline-first": `ChatRepository` makes a
+live call on every send, never queues one, and never caches message
+*content* in Room — only the current session id (`ChatSessionStore`, a
+plain, non-encrypted preference; a session id is not a credential) so
+reopening the app resumes the same conversation via
+`GET /api/chat/sessions/{id}` instead of starting over. `401`s on these
+calls still flow through the same `TokenAuthenticator` as every other
+endpoint — nothing chat-specific there. A `429` (rate limited) or `503`
+(the backend's own OpenAI/provider call failed) surfaces as a specific,
+visible error in the Chat screen, never a silent retry — unlike the
+document queue, there is no background worker that should keep hammering
+a chat send on the user's behalf.

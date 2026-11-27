@@ -4,6 +4,7 @@ import com.aifinancial.mobile.BuildConfig
 import com.aifinancial.mobile.auth.TokenAuthenticator
 import com.aifinancial.mobile.data.remote.AuthApi
 import com.aifinancial.mobile.data.remote.BudgetsApi
+import com.aifinancial.mobile.data.remote.ChatApi
 import com.aifinancial.mobile.data.remote.DevicesApi
 import com.aifinancial.mobile.data.remote.DocumentsApi
 import com.aifinancial.mobile.data.remote.TransactionsApi
@@ -89,6 +90,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideBudgetsApi(retrofit: Retrofit): BudgetsApi = retrofit.create(BudgetsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideChatApi(retrofit: Retrofit): ChatApi = retrofit.create(ChatApi::class.java)
 
     /**
      * No auth interceptor and no [TokenAuthenticator] here, by design — see
