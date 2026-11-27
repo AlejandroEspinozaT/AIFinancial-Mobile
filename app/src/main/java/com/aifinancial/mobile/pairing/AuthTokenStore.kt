@@ -28,15 +28,27 @@ class AuthTokenStore @Inject constructor(@ApplicationContext context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
     )
 
-    fun saveTokens(deviceId: String, accessToken: String, refreshToken: String) {
+    /**
+     * `deviceName`/`email` are stored only for Stage 4's Settings screen —
+     * see `DeviceAuthResponseDto`'s KDoc on the backend: email is returned
+     * specifically so this device can show "linked to ...@..." without a
+     * further authenticated call.
+     */
+    fun saveTokens(deviceId: String, deviceName: String, email: String, accessToken: String, refreshToken: String) {
         prefs.edit()
             .putString(KEY_DEVICE_ID, deviceId)
+            .putString(KEY_DEVICE_NAME, deviceName)
+            .putString(KEY_EMAIL, email)
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
             .apply()
     }
 
     fun getDeviceId(): String? = prefs.getString(KEY_DEVICE_ID, null)
+
+    fun getDeviceName(): String? = prefs.getString(KEY_DEVICE_NAME, null)
+
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
 
     fun getAccessToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)
 
@@ -64,6 +76,8 @@ class AuthTokenStore @Inject constructor(@ApplicationContext context: Context) {
     private companion object {
         const val PREFS_FILE_NAME = "aifinancial_auth_tokens"
         const val KEY_DEVICE_ID = "device_id"
+        const val KEY_DEVICE_NAME = "device_name"
+        const val KEY_EMAIL = "email"
         const val KEY_ACCESS_TOKEN = "access_token"
         const val KEY_REFRESH_TOKEN = "refresh_token"
     }

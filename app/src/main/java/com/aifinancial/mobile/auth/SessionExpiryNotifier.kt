@@ -20,8 +20,27 @@ class SessionExpiryNotifier @Inject constructor() {
     private val _events = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val events: SharedFlow<Unit> = _events.asSharedFlow()
 
+    // Plain @Volatile, not a Flow: this is read exactly once, by
+    // PairingViewModel's own init, to decide its *initial* state — it isn't
+    // observed over time the way [events] is.
+    @Volatile
+    private var revoked = false
+
     /** Safe to call from any thread, including an OkHttp dispatcher thread. */
     fun notifyExpired() {
+        revoked = true
         _events.tryEmit(Unit)
+    }
+
+    /**
+     * Stage 4's "handle server-initiated revocation gracefully": `true`
+     * only the first time this is called after a [notifyExpired] — read-once
+     * so a later, unrelated pairing attempt never resurfaces the old
+     * revocation message.
+     */
+    fun consumeRevocationFlag(): Boolean {
+        val was = revoked
+        revoked = false
+        return was
     }
 }
